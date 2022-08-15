@@ -29,7 +29,7 @@
 
 #### 1.注入基本数据类型 
 
-1. 用 set 进行注入
+1. 用 set 方法进行注入（需要有 set 方法）
 
 ```xml
 在XML中编写，默认是无参构造函数生成对象，因此类中需要有对应的无参构造方法
@@ -46,7 +46,7 @@ property中
 
 ```
 
-2. 用有参构造注入属性
+2. 用有参构造注入属性（**constructor-arg**）
 
 ```xml
 <bean id = "user" class="com.atguigu.spring5.User"> 
@@ -88,6 +88,7 @@ xmlns:p="http://www.springframework.org/schema/p"
 1. 用转义符
 2. 用 CDATA 写法
 格式 <value><![CDATA[ "特殊符号内容" ] ]> </value>
+
 <property name="address">
 	<value><![CDATA[<<南京>>]]> </value>
 </property?>
@@ -100,11 +101,12 @@ xmlns:p="http://www.springframework.org/schema/p"
 > 把其他的类作为属性注入到当前 Bean 中
 
 ```xml
-1. 需要先声明对应的对象
+1. 需要在外部声明对应的对象
  <bean id="userService" class="com.atguigu.service.Userservice">
 
                 <property name="userDao" ref="useDaoImpl"></property>
-        </bean>
+ </bean>
+
  <bean id="useDaoImpl" class="com.atguigu.dao.UserDaoImpl"></bean>
 
 2.用属性 ref 表明通过外部导入 Bean，导入的对象是外部声明的 id 名字
@@ -114,23 +116,23 @@ xmlns:p="http://www.springframework.org/schema/p"
 
 #### 3. 内部注入 Bean 
 
-> 通过设置属性的时候，加入子 Bean
+> 通过设置属性的时候，在里面创建一个 Bean
 
 ```xml
 <property name="dept">
 	<bean id="dept" class="com.atguigu.bean.Dept">
-    	<property name="dname" valude="保安"></property>	
+    	<property name="dname" valude="保安"> </property>	
     </bean>
 </property>
 ```
 
-6. 1级联赋值
+3. 1级联赋值
 
 ```xml
-1. 
+1.在外部把 bean 的属性配置好，然后导入 
 	<bean> <property name="dept" ref="dept"></property> </bean>	
 
-	<bean id="dept" class="……">
+<bean id="dept" class="……">
 	<property name="dname" value="……"> </property>
 </bean>
 
@@ -204,7 +206,7 @@ xmlns:p="http://www.springframework.org/schema/p"
 </property>
 ```
 
-#### 5. 使用 utli 标签简化注入
+#### 5. 使用 util 标签简化注入
 
 ```xml
 1. 先设置 util 所携带的值
@@ -269,7 +271,7 @@ xmlns:p="http://www.springframework.org/schema/p"
 ```xml
 通过 bean 标签属性 autowire 进行配置自动装配
 	1. byName 根据属性名注入（会查找对应的 bean 的 id 和该类属性名称一样的配置）
-	2. byType 根据属性类型注入（但是只能一个属性类型相同）
+	2. byType 根据属性类型注入（但是只能一个属性类型相同，多个会报错）
 ```
 
 #### 10. 外部属性文件
@@ -285,7 +287,8 @@ http://www.springframework.org/schema/context/spring-context.xsd
 
 <!--引入外部属性文件--> <context:property-placeholder location="classpath:jdbc.properties"/>
 配置连接池
-<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource"> 				<property name="driverClassName" value="${prop.driverClass}"></property> 		<property name="url" value="${prop.url}"></property> 
+<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource"> 				<property name="driverClassName" value="${prop.driverClass}"></property> 		
+    <property name="url" value="${prop.url}"></property> 
     <property name="username" value="${prop.userName}"></property> 
     <property name="password" value="${prop.password}"></property>
 </bean>
@@ -318,7 +321,7 @@ http://www.springframework.org/schema/context/spring-context.xsd
 
 ```xml
 <!--示例1 use-default-filters="false" 表示现在不使用默认filter，自己配置filter context:include-filter ，设置扫描哪些内容 --> 
-<context:component-scan base-package="com.atguigu" use-default-filters="false"> 			<context:include-filter type="annotation"expression="org.springframework.stereotype.Controller"/> 
+<context:component-scan base-package="com.atguigu" use-default-filters="false"> 		<context:include-filter type="annotation"expression="org.springframework.stereotype.Controller"/> 
 </context:component-scan> 
 
 <!--示例2 下面配置扫描包所有内容 context:exclude-filter： 设置哪些内容不进行扫描 --> <context:component-scan base-package="com.atguigu"> 
