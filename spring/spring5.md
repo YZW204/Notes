@@ -377,4 +377,217 @@ http://www.springframework.org/schema/context/spring-context.xsd
 >
 > 第三个	 InvocationHandler h：实现这个接口 InvocationHandler，创建代理对象，写增强的部分
 
- 
+ 通过继承 InvocationHandler 接口，补充一个有参构造（传入需要修改的类）,并实现里面的方法 invoke，在里面调用 method.invoke就是实现原方法，在这之前和之后添加的代码都代表了增强
+
+```java
+class UserDaoProxy implements InvocationHandler {
+//1 把创建的是谁的代理对象，把谁传递过来 
+
+//有参数构造传递 
+private Object obj; 
+
+public UserDaoProxy(Object obj) {
+this.obj = obj; 
+} 
+//增强的逻辑 
+@Override 
+public Object invoke(Object proxy, Method method, Object[] args) throws Throwable { 
+    //方法之前 
+    System.out.println("方法之前执行...."+method.getName()+" :传递的参数..."+ Arrays.toString(args)); 
+    
+    //被增强的方法执行 
+    Object res = method.invoke(obj, args); 
+    
+    //方法之后 
+    System.out.println("方法之后执行...."+obj); return res; } }
+AOP
+```
+
+### 3. 术语
+
+1. 连接点
+
+> 可以被增强的方法
+
+2. 切入点
+
+> 实际被增强的方法
+
+3. 通知(增强)
+
+> 实际增强的逻辑部分
+
+类型：
+
+- 前置通知
+- 后置通知
+- 环绕通知
+- 异常通知
+- 最终通知
+
+4. 切面
+
+> 把通知（3）应用到切入点（2）的过程
+
+### 4. AOP 操作
+
+> Spring 框架一般是基于 AspectJ 实现 AOP 操作，AspectJ 不是 Spring 框架中，但一般使用它来操作 Spring 的 AOP
+
+1. 操作方式
+
+- 基于 XML 配置文件实现
+- 基于注解方式实现
+
+2.  导入相关的依赖
+3. 切入点表达式
+
+> execution( [ 权限修饰符 ] [ 返回值 ] [ 类名全路径] [ 类名 ] [ 增强的方法] ([参数列表]) )
+
+例子
+
+```java
+1. 对一个方法加强
+    execution(* com.atguigu.BookDao.add(..));
+2. 对类的所有的方法增强
+    execution(* com.atguigu.BookDao.*(..));
+3. 对所有类所有方法增强
+    execution(* com.atguigu.*.*(..));
+```
+
+### 5通过注解操作AOP
+
+1. 创建类，定义方法
+
+```java
+package aopanno;
+
+import org.springframework.stereotype.Component;
+//被增强类
+@Component
+public class User {
+    public  void  add(){
+        System.out.println("add....");
+    }
+}
+
+```
+
+2. 创建增强类
+
+```java
+//增强的类 
+public class UserProxy { 
+    public void before() {
+        //前置通知
+        System.out.println("before......");
+    } 
+}
+```
+
+
+
+3. 配置注解、扫描、aop等，并开启生成代理对象
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context" //配置上context
+       xmlns:aop="http://www.springframework.org/schema/aop" //配置aop
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                            http://www.springframework.org/schema/context
+                           //配置context http://www.springframework.org/schema/context/spring-context.xsd
+                            http://www.springframework.org/schema/aop  //配置aop http://www.springframework.org/schema/aop/spring-aop.xsd ">
+<context:component-scan base-package="aopanno"></context:component-scan> 开启扫描注解
+ <aop:aspectj-autoproxy></aop:aspectj-autoproxy> //开启AspectJ生成代理对象   
+</beans>
+```
+
+4. 使用注解创建对象
+
+```java
+在增强类和被增强类前面加上 @Component
+在增强类前面‘再’加上 @Aspect
+```
+
+5. 配置不同的通知
+
+```java
+package aopanno;
+
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.*;
+import org.springframework.stereotype.Component;
+
+import javax.print.attribute.standard.JobKOctetsProcessed;
+
+//增强类
+@Component
+@Aspect
+public class Userproxy {
+
+    @Before(value = "execution(* aopanno.User.add(..))")
+    public  void before(){
+        System.out.println("before........");
+    }
+    @After(value = "execution(* aopanno.User.add(..))")
+    public  void after(){
+        System.out.println("After........");
+    }
+    @AfterThrowing(value = "execution(* aopanno.User.add(..))")
+    public  void afterThrowing(){
+        System.out.println("AfterThrowing........");
+    }
+    @AfterReturning(value = "execution(* aopanno.User.add(..))")
+    public  void afterReturning(){
+        System.out.println("AfterReturning........");
+    }
+    @Around(value = "execution(* aopanno.User.add(..))")
+    public  void Around(ProceedingJoinPoint proceedingJoinPoint ) throws Throwable{
+        System.out.println("环绕之前……");
+       proceedingJoinPoint.proceed();
+        System.out.println("环绕之后……");
+    }
+}
+
+```
+
+6. 相同切入点的抽取
+
+```java
+1.创建一个方法，用来抽取切入点
+    
+    @Pointcut(value="execution(* aopanno.User.add(..))")
+    public void pointdemo(){
+    
+}
+2. 可以直接调用该方法在值中
+     @Before(value = "pointdemo()")
+    public  void before(){
+        System.out.println("before........");
+    }
+```
+
+7. 设置各个增强类的优先级大小
+
+> 数字越小优先级越大
+
+```java
+@Component
+@Aspect
+@Order(1)
+```
+
+8. 完全注解配置
+
+> 创建一个类用来配置 XML 文件
+
+```java
+@Configuration
+@ComponentScan(basePackages={"aopanno"})
+@EnableAspectJAutoProxy(proxyTargetClass=true)
+public class ConfigAop{
+    
+}
+```
+
