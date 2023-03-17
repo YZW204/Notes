@@ -1,0 +1,1 @@
+1. 用@Repository在类上就没有控制了，反而用Controller就会实现
